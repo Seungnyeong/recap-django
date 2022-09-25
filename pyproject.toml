@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "django-airbnb"
+version = "0.1.0"
+description = ""
+authors = ["seungnyeong.kim <workingsnkim@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "django_airbnb"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+Django = "^4.1"
+Pillow = "^9.2.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = {version = "^22.8.0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
