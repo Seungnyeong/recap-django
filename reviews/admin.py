@@ -2,7 +2,53 @@ from django.contrib import admin
 from .models import Review
 
 
+class WordFilter(admin.SimpleListFilter):
+    title = "filter by words!"
+    parameter_name = "word"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("good", "Good"),
+            ("great", "Great"),
+            ("awesome", "Awesome"),
+        ]
+
+    def queryset(self, request, reviews):
+        word = self.value()
+        if word:
+            return reviews.filter(payload__icontains=word)
+        else:
+            return reviews
+
+
+class RatingFilter(admin.SimpleListFilter):
+    title = "rating filter"
+    parameter_name = "rating"
+
+    def lookups(self, request, model_admin):
+        return [
+            ("good", "Good"),
+            ("bad", "Bad"),
+        ]
+
+    def queryset(self, request, reviews):
+
+        if self.value() == "good":
+            return reviews.filter(rating__gte=3)
+        elif self.value() == "bad":
+            return reviews.filter(rating__lt=3)
+        else:
+            return reviews
+
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ("__str__", "payload")
-    list_filter = ("rating",)
+    list_filter = (
+        RatingFilter,
+        WordFilter,
+        "rating",
+        "user__is_host",
+        "room__category",
+        "room__pet_friendly",
+    )
