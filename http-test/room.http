@@ -1,0 +1,17 @@
+POST http://localhost:8000/api/v1/rooms/
+Content-Type: application/json
+
+{
+  "name": "House",
+  "country": "미국",
+  "city": "뉴욕",
+  "price": 100,
+  "rooms": 3,
+  "toilets": 5,
+  "description": "sdfsdfsdfsdf",
+  "address": "ManHansen",
+  "pet_friendly": true,
+  "kind": "entire_place",
+  "category": 2,
+  "amenities" : [1]
+}
