@@ -29,6 +29,7 @@ ALLOWED_HOSTS = []
 
 THRID_PARTY_APPS = [
     "rest_framework",
+    "strawberry.django",
 ]
 
 

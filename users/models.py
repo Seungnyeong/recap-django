@@ -20,7 +20,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150, editable=False)
     last_name = models.CharField(max_length=150, editable=False)
     name = models.CharField(max_length=150, default="")
-    avatar = models.ImageField(blank=True)  # blank는 Form에서 NULL 처리
+    avatar = models.URLField(blank=True)  # blank는 Form에서 NULL 처리
     is_host = models.BooleanField(null=True)
     gender = models.CharField(max_length=10, choices=GenderChoices.choices)
     language = models.CharField(max_length=2, choices=LanguageChoices.choices)
