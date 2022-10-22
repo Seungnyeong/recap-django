@@ -1,3 +1,5 @@
+import jwt
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -28,9 +30,8 @@ class Me(APIView):
 
 
 class Users(APIView):
-
     def post(self, request):
-        password = request.data.get('password')
+        password = request.data.get("password")
         if not password:
             raise ParseError()
 
@@ -46,7 +47,6 @@ class Users(APIView):
 
 
 class PublicUser(APIView):
-
     def get(self, request, username):
         try:
             user = User.objects.get(username=username)
@@ -61,8 +61,8 @@ class ChangePassword(APIView):
 
     def put(self, request):
         user = request.user
-        old_password = request.data.get('old_password')
-        new_password = request.data.get('new_password')
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
         if not old_password or not new_password:
             raise ParseError()
         if user.check_password(old_password):
@@ -74,10 +74,9 @@ class ChangePassword(APIView):
 
 
 class Login(APIView):
-
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
+        username = request.data.get("username")
+        password = request.data.get("password")
         if not username or not password:
             raise ParseError()
         user = authenticate(request, username=username, password=password)
@@ -87,10 +86,26 @@ class Login(APIView):
         else:
             return Response({"error": "wrong password"})
 
+
 class Logout(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         logout(request)
-        return Response({'ok': 'bye'})
+        return Response({"ok": "bye"})
+
+
+class JWTLogIn(APIView):
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        if not username or not password:
+            raise ParseError()
+        user = authenticate(request, username=username, password=password)
+
+        if user:
+            token = jwt.encode({"pk": user.pk}, settings.SECRET_KEY, algorithm="HS256")
+            return Response({"token": token})
+        else:
+            return Response({"error": "wrong password"})
