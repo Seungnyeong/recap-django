@@ -5,18 +5,6 @@ from django.conf import settings
 from users.models import User
 
 
-class TrustMeBroAuthentiaction(BaseAuthentication):
-    def authenticate(self, request):
-        username = request.headers.get("Trust-Me")
-        if not username:
-            return None
-        try:
-            user = User.objects.get(username=username)
-            return (user, None)
-        except User.DoesNotExist:
-            raise AuthenticationFailed(f"No user {username}")
-
-
 class JWTAuthentication(BaseAuthentication):
     def authenticate(self, request):
         token = request.headers.get("Jwt")
