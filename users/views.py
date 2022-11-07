@@ -8,6 +8,7 @@ from rest_framework.exceptions import ParseError, NotFound
 from rest_framework.permissions import IsAuthenticated
 from .serializers import PrivateUserSerializer
 from users.models import User
+import requests
 
 
 class Me(APIView):
@@ -74,6 +75,9 @@ class ChangePassword(APIView):
 
 
 class Login(APIView):
+    permission_classes = []
+    authentication_classes = []
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -109,3 +113,99 @@ class JWTLogIn(APIView):
             return Response({"token": token})
         else:
             return Response({"error": "wrong password"})
+
+
+class GithubLogIn(APIView):
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request):
+        try:
+            code = request.data.get("code")
+            access_token = requests.post(
+                f"https://github.com/login/oauth/access_token?code={code}&client_id=13abba8899e12c0e46d9&client_secret={settings.GH_SECRET}",
+                headers={"Accept": "application/json"},
+            )
+            print(access_token.json())
+            access_token = access_token.json().get("access_token")
+            user_data = requests.get(
+                "https://api.github.com/user",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json",
+                },
+            )
+            user_data = user_data.json()
+
+            user_email = requests.get(
+                "https://api.github.com/user/emails",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/json",
+                },
+            )
+            user_email = user_email.json()
+            try:
+                user = User.objects.get(email=user_email[0]["email"])
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                user = User.objects.create(
+                    username=user_data.get("login"),
+                    email=user_email[0]["email"],
+                    name=user_data.get("name"),
+                    avatar=user_data.get("avatar_url"),
+                )
+                user.set_unusable_password()
+                user.save()
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class KakaoLogin(APIView):
+    permission_classes = []
+    authentication_classes = []
+
+    def post(self, request):
+        try:
+            code = request.data.get("code")
+            access_token = requests.post(
+                "https://kauth.kakao.com/oauth/token",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={
+                    "grant_type": "authorization_code",
+                    "client_id": "3dbefc19408b31b5dd0a1aa3de2e31e7",
+                    "redirect_uri": "http://127.0.0.1:3000/social/kakao",
+                    "code": code,
+                },
+            )
+            access_token = access_token.json().get("access_token")
+            user_data = requests.get(
+                "https://kapi.kakao.com/v2/user/me",
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-type": "application/x-www-form-urlencoded;charset=utf-8",
+                },
+            )
+            user_data = user_data.json()
+            kakao_account = user_data.get("kakao_account")
+            profile = kakao_account.get("profile")
+            try:
+                user = User.objects.get(email=kakao_account.get("email"))
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                user = User.objects.create(
+                    email=kakao_account.get("email"),
+                    username=profile.get("nickname"),
+                    name=profile.get("profile_image_url"),
+                    avatar=profile.get("profile_image_url"),
+                )
+                user.set_unusable_password()
+                user.save()
+                login(request, user)
+                return Response(status=status.HTTP_200_OK)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
