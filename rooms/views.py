@@ -64,7 +64,6 @@ class AmenityDetail(APIView):
 
 class Rooms(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
-    authentication_classes = []
 
     def get(self, request):
         all_rooms = Room.objects.all()
@@ -75,6 +74,7 @@ class Rooms(APIView):
 
     def post(self, request):
         serializer = RoomDetailSerializer(data=request.data)
+        print(request.user)
         if serializer.is_valid():
             category_id = request.data.get("category")
             if not category_id:
@@ -88,14 +88,18 @@ class Rooms(APIView):
                 raise ParseError("Category Not Found")
             try:
                 with transaction.atomic():
+
                     room = serializer.save(owner=request.user, category=category)
                     amenities = request.data.get("amenities")
                     for amenity_pk in amenities:
                         amenity = Amenity.objects.get(pk=amenity_pk)
                         room.amenities.add(amenity)
-                    serializer = RoomDetailSerializer(room)
+                    serializer = RoomDetailSerializer(
+                        room, context={"request": request}
+                    )
                     return Response(serializer.data)
-            except Exception:
+            except Exception as e:
+                print(e)
                 raise ParseError("Amenity not found")
         else:
             return Response(serializer.errors)
