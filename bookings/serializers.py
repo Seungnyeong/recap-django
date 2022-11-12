@@ -9,11 +9,7 @@ class CreateRoomBookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = (
-            "check_in",
-            "check_out",
-            "guests"
-        )
+        fields = ("check_in", "check_out", "guests")
 
     def validate_check_in(self, value):
         now = timezone.localtime(timezone.now()).date()
@@ -28,13 +24,17 @@ class CreateRoomBookingSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        if data['check_out'] <= data['check_in']:
+        room = self.context.get("room")
+        if data["check_out"] <= data["check_in"]:
             # 해당 로직이 예약건에 대해서 제일 중요한 로직임
-            raise serializers.ValidationError("Check in should be smaller than check out")
+            raise serializers.ValidationError(
+                "Check in should be smaller than check out"
+            )
         if Booking.objects.filter(
-                check_in__lte=data["check_out"],
-                check_out__gte=data["check_in"],
-            ).exists():
+            room=room,
+            check_in__lte=data["check_out"],
+            check_out__gte=data["check_in"],
+        ).exists():
             raise serializers.ValidationError("Those of  dates are already taken")
         else:
             return data
@@ -43,11 +43,4 @@ class CreateRoomBookingSerializer(serializers.ModelSerializer):
 class PublicBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
-        fields = (
-            "pk",
-            "kind",
-            "check_in",
-            "check_out",
-            "experience_time",
-            "guests"
-        )
+        fields = ("pk", "kind", "check_in", "check_out", "experience_time", "guests")
